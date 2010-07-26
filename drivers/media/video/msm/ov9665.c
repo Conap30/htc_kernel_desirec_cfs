@@ -443,7 +443,7 @@ int ov9665_sensor_config(void __user *argp)
 
 	case CFG_GET_AF_MAX_STEPS:
 	default:
-		rc = -EINVAL;
+		printk(KERN_ERR "unhandled cfgtype: %d\n", cfg_data.cfgtype);
 		break;
 	}
 
