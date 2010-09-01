@@ -684,6 +684,9 @@ static struct attribute *default_attrs[] = {
 	NULL
 };
 
+struct kobject *cpufreq_global_kobject;
+EXPORT_SYMBOL(cpufreq_global_kobject);
+
 #define to_policy(k) container_of(k,struct cpufreq_policy,kobj)
 #define to_attr(a) container_of(a,struct freq_attr,attr)
 
@@ -1925,6 +1928,11 @@ static int __init cpufreq_core_init(void)
 		per_cpu(policy_cpu, cpu) = -1;
 		init_rwsem(&per_cpu(cpu_policy_rwsem, cpu));
 	}
+
+        cpufreq_global_kobject = kobject_create_and_add("cpufreq",
+                                                &cpu_sysdev_class.kset.kobj);
+        BUG_ON(!cpufreq_global_kobject);
+
 	return 0;
 }
 
