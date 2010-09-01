@@ -34,6 +34,8 @@ static DEFINE_MUTEX(clocks_mutex);
 static DEFINE_SPINLOCK(clocks_lock);
 static HLIST_HEAD(clocks);
 
+struct clk* axi_clk;  /* hack */
+
 static int clk_set_rate_locked(struct clk *clk, unsigned long rate);
 
 /*
@@ -41,12 +43,17 @@ static int clk_set_rate_locked(struct clk *clk, unsigned long rate);
  */
 static inline int pc_clk_enable(unsigned id)
 {
+	/* gross hack to set axi clk rate when turning on uartdm clock */
+	if (id == UART1DM_CLK && axi_clk)
+		clk_set_rate_locked(axi_clk, 128000000);
 	return msm_proc_comm(PCOM_CLKCTL_RPC_ENABLE, &id, NULL);
 }
 
 static inline void pc_clk_disable(unsigned id)
 {
 	msm_proc_comm(PCOM_CLKCTL_RPC_DISABLE, &id, NULL);
+	if (id == UART1DM_CLK && axi_clk)
+		clk_set_rate_locked(axi_clk, 0);
 }
 
 static inline int pc_clk_set_rate(unsigned id, unsigned rate)
@@ -470,6 +477,9 @@ static int __init clock_late_init(void)
 	pr_info("clock_late_init() disabled %d unused clocks\n", count);
 
 	clock_debug_init();
+
+	axi_clk = clk_get(NULL, "ebi1_clk");
+
 	return 0;
 }
 

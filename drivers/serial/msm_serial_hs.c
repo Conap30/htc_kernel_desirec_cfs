@@ -209,7 +209,7 @@ static ssize_t store_serial_lock_cpu(struct device *dev,
 	if (strlen(buf) > 15)
 		return 0;
 
-	sscanf(buf, "%s", in_char);
+	sscanf(buf, "%14s", in_char);
 
 	if (strcmp(in_char, "cpu_lock_high") == 0)
 		serial_lock_cpu_state = 2;
@@ -1280,6 +1280,7 @@ static int msm_hs_startup(struct uart_port *uport)
 	tx->dma_in_flight = 0;
 
 	tx->xfer.complete_func = msm_hs_dmov_tx_callback;
+	tx->xfer.execute_func = NULL;
 
 	tx->command_ptr->cmd = CMD_LC |
 	    CMD_DST_CRCI(msm_uport->dma_tx_crci) | CMD_MODE_BOX;
@@ -1295,6 +1296,7 @@ static int msm_hs_startup(struct uart_port *uport)
 
 	/* Turn on Uart Receive */
 	rx->xfer.complete_func = msm_hs_dmov_rx_callback;
+	tx->xfer.execute_func = NULL;
 
 	rx->command_ptr->cmd = CMD_LC |
 	    CMD_SRC_CRCI(msm_uport->dma_rx_crci) | CMD_MODE_BOX;
@@ -1428,8 +1430,10 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	uport->irq = platform_get_irq(pdev, 0);
+	/*
 	if (unlikely(uport->irq < 0))
 		return -ENXIO;
+	*/
 	if (unlikely(set_irq_wake(uport->irq, 1)))
 		return -ENXIO;
 
