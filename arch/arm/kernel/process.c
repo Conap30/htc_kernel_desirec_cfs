@@ -113,7 +113,6 @@ void arm_machine_restart(char mode)
 /*
  * Function pointers to optional machine specific functions
  */
-
 void (*pm_power_off)(void);
 EXPORT_SYMBOL(pm_power_off);
 
@@ -127,16 +126,17 @@ EXPORT_SYMBOL_GPL(arm_pm_restart);
  */
 static void default_idle(void)
 {
-	if (!need_resched()	
-   	arch_idle();
- 	local_irq_enable();
+	if (!need_resched())
+		arch_idle();
+	local_irq_enable();
 }
 
 void (*pm_idle)(void) = default_idle;
 EXPORT_SYMBOL(pm_idle);
+
 /*
- * The idle thread, has rather strange semantics for calling pm_idle,	
- * but this is what x86 does and we need to do the same, so that	
+ * The idle thread, has rather strange semantics for calling pm_idle,
+ * but this is what x86 does and we need to do the same, so that
  * things like cpuidle get called in the same way.  The only difference
  * is that we always respect 'hlt_counter' to prevent low power idle.
  */
@@ -146,30 +146,31 @@ void cpu_idle(void)
 
 	/* endless idle loop with no priority at all */
 	while (1) {
-		tick_nohz_stop_sched_tick(1);	
+		tick_nohz_stop_sched_tick(1);
 		leds_event(led_idle_start);
 		while (!need_resched()) {
 #ifdef CONFIG_HOTPLUG_CPU
-		if (cpu_is_offline(smp_processor_id()))
-		cpu_die();
+			if (cpu_is_offline(smp_processor_id()))
+				cpu_die();
 #endif
-      local_irq_disable();
-      if (hlt_counter) {	
-        local_irq_enable();
-        cpu_relax();	
-      } else {
-        stop_critical_timings();	
-        pm_idle();
-        start_critical_timings();
-        /*	
-         * This will eventually be removed - pm_idle	
-         * functions should always return with IRQs
-         * enabled.
-         */
-        WARN_ON(irqs_disabled());	
-      local_irq_enable();
-     }	
-   }
+
+			local_irq_disable();
+			if (hlt_counter) {
+				local_irq_enable();
+				cpu_relax();
+			} else {
+				stop_critical_timings();
+				pm_idle();
+				start_critical_timings();
+				/*
+				 * This will eventually be removed - pm_idle
+				 * functions should always return with IRQs
+				 * enabled.
+				 */
+				WARN_ON(irqs_disabled());
+				local_irq_enable();
+			}
+		}
 		leds_event(led_idle_end);
 		tick_nohz_restart_sched_tick();
 		preempt_enable_no_resched();

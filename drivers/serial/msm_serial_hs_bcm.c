@@ -155,6 +155,7 @@ struct msm_hs_port {
 	unsigned char bt_wakeup_level;
 	unsigned char host_wakeup_pin;
 	unsigned char host_want_sleep;
+	int request_clk_off_delay;
 	#endif
 
 	#if 1	/* only for legned? */
@@ -228,7 +229,7 @@ static ssize_t store_serial_lock_cpu(struct device *dev,
 	if (strlen(buf) > 15)
 		return 0;
 
-	sscanf(buf, "%s", in_char);
+	sscanf(buf, "%14s", in_char);
 
 	if (strcmp(in_char, "cpu_lock_high") == 0)
 		serial_lock_cpu_state = 2;
@@ -1020,6 +1021,11 @@ static int msm_hs_check_clock_off_locked(struct uart_port *uport)
 	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
 	struct circ_buf *tx_buf = &uport->info->xmit;
 
+	if (msm_uport->request_clk_off_delay > 0) {
+		msm_uport->request_clk_off_delay--;
+		return 0;  /* delay */
+	}
+
 	/* Cancel if tx tty buffer is not empty, dma is in flight,
 	 * or tx fifo is not empty */
 	if (msm_uport->clk_state != MSM_HS_CLK_REQUEST_OFF ||
@@ -1224,6 +1230,7 @@ static void msm_hs_request_clock_on_locked(struct uart_port *uport)
 		#endif
 
 	case MSM_HS_CLK_REQUEST_OFF:
+		msm_uport->request_clk_off_delay = 0;
 		hrtimer_try_to_cancel(&msm_uport->clk_off_timer);
 		if (msm_uport->rx.flush == FLUSH_SHUTDOWN)
 			msm_hs_start_rx_locked(uport);
@@ -1348,6 +1355,9 @@ static irqreturn_t msm_hs_wakeup_isr(int irq, void *dev)
 		if ((msm_uport->host_want_sleep)
 				&& (msm_uport->clk_state == MSM_HS_CLK_ON)) {
 			#if 1	/* testing purpose, but do "not" remove it */
+			if (msm_uport->bt_wakeup_level)
+				msm_uport->request_clk_off_delay = 3;
+			
 			msm_uport->clk_state = MSM_HS_CLK_REQUEST_OFF;
 			/* should change to rx?? */
 			msm_uport->imr_reg |= UARTDM_ISR_TXLEV_BMSK;
@@ -1363,12 +1373,12 @@ static irqreturn_t msm_hs_wakeup_isr(int irq, void *dev)
 			|| (msm_uport->clk_state == MSM_HS_CLK_REQUEST_OFF)) {
 			msm_hs_request_clock_on_locked(uport);
 		}
-
-		/* btld will set BT_CHIP_WAKEUP HIGH later in this case,
+/*
+		* btld will set BT_CHIP_WAKEUP HIGH later in this case,
 		 * so it is ok here.
-		 * */
+		 * *
 		msm_uport->host_want_sleep = 0;
-
+*/
 		printk(KERN_INFO "--- BT chip sets HOST_WAKE=LOW ---\n");
 
 	}
@@ -1642,8 +1652,10 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	uport->irq = platform_get_irq(pdev, 0);
+	/*
 	if (unlikely(uport->irq < 0))
 		return -ENXIO;
+	*/
 	if (unlikely(set_irq_wake(uport->irq, 1)))
 		return -ENXIO;
 
@@ -1705,6 +1717,7 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 		msm_uport->bt_wakeup_level = 1;
 		msm_uport->host_wakeup_pin = pdata->host_wakeup_pin;
 		msm_uport->host_want_sleep = 1;
+		msm_uport->request_clk_off_delay = 0;
 	}
 	#endif
 
@@ -1743,7 +1756,7 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 	hrtimer_init(&msm_uport->clk_off_timer, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL);
 	msm_uport->clk_off_timer.function = msm_hs_clk_off_retry;
-	#ifdef USE_BCM_BT_CHIP	/* for BCM and GEP */
+	#if 0	//def USE_BCM_BT_CHIP	/* for BCM and GEP */
 	msm_uport->clk_off_delay = ktime_set(0, 1000000);  /* 1ms */
 	#else	/* for btips */
 	msm_uport->clk_off_delay = ktime_set(0, 10000000);  /* 1ms --> 10ms */

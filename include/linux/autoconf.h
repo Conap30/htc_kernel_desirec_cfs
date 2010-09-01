@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
- * Linux kernel version: 2.6.29
- * Thu Aug 26 19:21:35 2010
+ * Linux kernel version: 2.6.29.6
+ * Wed Sep  1 17:50:17 2010
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_VIDEO_V4L1_COMPAT 1
@@ -348,7 +348,7 @@
 #define CONFIG_MD 1
 #define CONFIG_BLK_DEV_CRYPTOLOOP 1
 #define CONFIG_MSM_MDP22 1
-#define CONFIG_LOCALVERSION ""
+#define CONFIG_LOCALVERSION "-DecaFuct"
 #define CONFIG_ZLIB_INFLATE 1
 #define CONFIG_INIT_ENV_ARG_LIMIT 32
 #define CONFIG_SUSPEND_FREEZER 1
@@ -438,7 +438,6 @@
 #define CONFIG_LEDS_GPIO 1
 #define CONFIG_USB_FUNCTION_MASS_STORAGE 1
 #define CONFIG_MODULE_FORCE_UNLOAD 1
-#define CONFIG_ANDROID_LOW_MEMORY_KILLER_CHECK_FILE_PAGES 1
 #define CONFIG_PACKET 1
 #define CONFIG_BT_RFCOMM 1
 #define CONFIG_FS_POSIX_ACL 1

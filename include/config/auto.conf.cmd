@@ -23,6 +23,7 @@ deps_config := \
 	net/sunrpc/Kconfig \
 	fs/nfsd/Kconfig \
 	fs/nfs/Kconfig \
+	fs/aufs/Kconfig \
 	fs/ufs/Kconfig \
 	fs/sysv/Kconfig \
 	fs/romfs/Kconfig \
@@ -454,7 +455,7 @@ deps_config := \
 include/config/auto.conf: \
 	$(deps_config)
 
-ifneq "$(KERNELVERSION)" "2.6.29"
+ifneq "$(KERNELVERSION)" "2.6.29.6"
 include/config/auto.conf: FORCE
 endif
 ifneq "$(ARCH)" "arm"
